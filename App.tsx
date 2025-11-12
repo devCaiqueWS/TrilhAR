@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Appearance, ColorSchemeName, Platform } from 'react-native';
 import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -26,40 +26,71 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    async function prepare() {
-      try {
-        // Load custom fonts (optional in dev; continue on failure)
-        await Font.loadAsync({
-          PoppinsBold: require('./assets/fonts/Poppins-Bold.ttf'),
-          PoppinsSemiBold: require('./assets/fonts/Poppins-SemiBold.ttf'),
-          Inter: require('./assets/fonts/Inter-Regular.ttf'),
-          InterMedium: require('./assets/fonts/Inter-Medium.ttf'),
-        });
-      } catch (e) {
-        // proceed with system fonts if assets missing
-        console.warn('Fonts not loaded, using system fonts.');
-      } finally {
-        // Install mocks only in development
-        if (__DEV__) installAxiosMocks();
-        initPersistence();
+    let mounted = true;
+    const fallback = setTimeout(() => {
+      if (mounted) {
         setReady(true);
-        await SplashScreen.hideAsync();
+        SplashScreen.hideAsync().catch(() => {});
       }
-    }
-    prepare();
+    }, 4000);
+    (async () => {
+      try {
+        // Ensure font load never blocks forever
+        await Promise.race([
+          Font.loadAsync({
+            PoppinsBold: require('./assets/fonts/Poppins-Bold.ttf'),
+            PoppinsSemiBold: require('./assets/fonts/Poppins-SemiBold.ttf'),
+            Inter: require('./assets/fonts/Inter-Regular.ttf'),
+            InterMedium: require('./assets/fonts/Inter-Medium.ttf'),
+          }),
+          new Promise((resolve) => setTimeout(resolve, 2500)),
+        ]);
+      } catch (e) {
+        console.warn('Fonts not loaded, using system fonts.');
+      }
+      try {
+        if (__DEV__) installAxiosMocks();
+      } catch (e) {
+        console.warn('Mocks install failed, continuing without mocks.');
+      }
+      try {
+        initPersistence();
+      } catch (e) {
+        console.warn('Persistence init failed, continuing with defaults.');
+      }
+      if (mounted) setReady(true);
+    })();
+    return () => {
+      mounted = false;
+      clearTimeout(fallback);
+    };
   }, []);
 
-  if (!ready) return null;
+  const onLayoutRootView = useCallback(async () => {
+    if (ready) {
+      try {
+        await SplashScreen.hideAsync();
+      } catch {}
+    }
+  }, [ready]);
+
+  useEffect(() => {
+    if (ready) {
+      SplashScreen.hideAsync().catch(() => {});
+    }
+  }, [ready]);
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView style={{ flex: 1 }} onLayout={onLayoutRootView}>
       <SafeAreaProvider>
-        <QueryClientProvider client={queryClient}>
-          <NavigationContainer theme={scheme === 'dark' ? DarkTheme : DefaultTheme} linking={linking}>
-            <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
-            <AppNavigator />
-          </NavigationContainer>
-        </QueryClientProvider>
+        {ready ? (
+          <QueryClientProvider client={queryClient}>
+            <NavigationContainer theme={scheme === 'dark' ? DarkTheme : DefaultTheme} linking={linking}>
+              <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
+              <AppNavigator />
+            </NavigationContainer>
+          </QueryClientProvider>
+        ) : null}
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

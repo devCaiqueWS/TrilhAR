@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, ScrollView } from 'react-native';
+import { View, Text, TextInput, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { AppHeader } from '../../components/AppHeader';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { GoalItem } from '../../components/GoalItem';
-import { useAppStore } from '../../store';
+import { useGoals, useCreateGoal, useToggleGoal, useDeleteGoal } from '../../services/goals';
 
 export const GoalsScreen: React.FC = () => {
-  const goals = useAppStore((s) => s.goals);
-  const addGoal = useAppStore((s) => s.addGoal);
-  const toggleGoal = useAppStore((s) => s.toggleGoal);
+  const { data: goals, isLoading, isError } = useGoals();
+  const createGoal = useCreateGoal();
+  const toggleGoal = useToggleGoal();
+  const deleteGoal = useDeleteGoal();
   const [newGoal, setNewGoal] = useState('');
   return (
     <View style={{ flex: 1, backgroundColor: '#F2F2F2' }}>
@@ -18,19 +19,34 @@ export const GoalsScreen: React.FC = () => {
         <PrimaryButton
           title="Adicionar"
           onPress={() => {
-            if (!newGoal.trim()) return;
-            addGoal({ id: String(Date.now()), title: newGoal.trim(), done: false, due: new Date().toISOString() });
-            setNewGoal('');
+            const title = newGoal.trim();
+            if (!title) return;
+            createGoal.mutate(
+              { title, due: new Date().toISOString() },
+              {
+                onSuccess: () => setNewGoal(''),
+                onError: (e: any) => Alert.alert('Erro', e?.response?.data?.message || 'Falha ao criar meta'),
+              },
+            );
           }}
+          disabled={createGoal.isPending}
         />
       </View>
       <ScrollView contentContainerStyle={{ padding: 16, gap: 8 }}>
-        {goals.length === 0 ? <Text>Nenhuma meta ainda</Text> : null}
-        {goals.map((g) => (
-          <GoalItem key={g.id} goal={g} onToggle={() => toggleGoal(g.id)} />
+        {isLoading ? <ActivityIndicator accessibilityLabel="Carregando metas" /> : null}
+        {isError ? <Text>Erro ao carregar metas</Text> : null}
+        {!isLoading && !isError && (goals?.length ?? 0) === 0 ? <Text>Nenhuma meta ainda</Text> : null}
+        {(goals || []).map((g) => (
+          <GoalItem
+            key={g.id}
+            goal={g}
+            onToggle={(done) =>
+              toggleGoal.mutate({ id: g.id, done }, { onError: () => Alert.alert('Erro', 'Falha ao atualizar meta') })
+            }
+            onDelete={() => deleteGoal.mutate(g.id, { onError: () => Alert.alert('Erro', 'Falha ao excluir meta') })}
+          />
         ))}
       </ScrollView>
     </View>
   );
 };
-

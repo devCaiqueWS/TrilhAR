@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, Pressable } from 'react-native';
+import { View, Text, ScrollView, Pressable, ActivityIndicator, Alert } from 'react-native';
 import { AppHeader } from '../../components/AppHeader';
 import { ProgressRing } from '../../components/ProgressRing';
 import { GoalItem } from '../../components/GoalItem';
@@ -9,15 +9,16 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { useGoals, useToggleGoal } from '../../services/goals';
 
 export const HomeScreen: React.FC = () => {
   const nav = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const user = useAppStore((s) => s.user);
-  const goals = useAppStore((s) => s.goals);
-  const toggle = useAppStore((s) => s.toggleGoal);
+  const { data: goals, isLoading, isError } = useGoals();
+  const toggle = useToggleGoal();
   const [toast, setToast] = useState<string | null>(null);
-  const completed = goals.filter((g) => g.done).length;
-  const pct = goals.length ? completed / goals.length : 0;
+  const completed = (goals || []).filter((g) => g.done).length;
+  const pct = (goals && goals.length) ? completed / goals.length : 0;
   return (
     <View style={{ flex: 1, backgroundColor: '#F2F2F2' }}>
       <AppHeader title={`Olá, ${user?.name ?? 'Visitante'}`} />
@@ -36,14 +37,21 @@ export const HomeScreen: React.FC = () => {
             <Ionicons name="calendar-outline" size={18} color="#167369" />
             <Text style={{ color: '#167369', fontWeight: '700' }}>Abrir planner de metas</Text>
           </Pressable>
-          {goals.map((g) => (
+          {isLoading ? <ActivityIndicator /> : null}
+          {isError ? <Text>Erro ao carregar metas</Text> : null}
+          {(goals || []).map((g) => (
             <GoalItem
               key={g.id}
               goal={g}
-              onToggle={() => {
-                toggle(g.id);
-                setToast(g.done ? 'Meta reaberta' : 'Meta concluída');
-              }}
+              onToggle={(done) =>
+                toggle.mutate(
+                  { id: g.id, done },
+                  {
+                    onSuccess: () => setToast(done ? 'Meta concluída' : 'Meta reaberta'),
+                    onError: () => Alert.alert('Erro', 'Falha ao atualizar meta'),
+                  },
+                )
+              }
             />
           ))}
         </View>
@@ -52,3 +60,4 @@ export const HomeScreen: React.FC = () => {
     </View>
   );
 };
+

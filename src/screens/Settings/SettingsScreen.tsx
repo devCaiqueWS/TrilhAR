@@ -2,15 +2,17 @@ import React from 'react';
 import { View, Text, Switch } from 'react-native';
 import { AppHeader } from '../../components/AppHeader';
 import { useAppStore } from '../../store';
+import { useNavigation } from '@react-navigation/native';
 
 export const SettingsScreen: React.FC = () => {
+  const nav = useNavigation();
   const theme = useAppStore((s) => s.theme);
   const setTheme = useAppStore((s) => s.setTheme);
   const language = useAppStore((s) => s.language);
   const setLanguage = useAppStore((s) => s.setLanguage);
   return (
     <View style={{ flex: 1, backgroundColor: '#F2F2F2' }}>
-      <AppHeader title="Configurações" />
+      <AppHeader title="Configurações" onBack={() => nav.goBack()} />
       <View style={{ padding: 16, gap: 16 }}>
         <Text style={{ fontWeight: '700' }}>Tema</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>

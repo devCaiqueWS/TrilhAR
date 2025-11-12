@@ -1,13 +1,13 @@
 import React from 'react';
-import { View, Text, Switch } from 'react-native';
+import { View, Text, Switch, Pressable } from 'react-native';
 import { radii } from '../theme/tokens';
 import Ionicons from '@expo/vector-icons/Ionicons';
 
 export type Goal = { id: string; title: string; done: boolean; due?: string };
 
-type Props = { goal: Goal; onToggle?: (done: boolean) => void };
+type Props = { goal: Goal; onToggle?: (done: boolean) => void; onDelete?: () => void };
 
-export const GoalItem: React.FC<Props> = ({ goal, onToggle }) => (
+export const GoalItem: React.FC<Props> = ({ goal, onToggle, onDelete }) => (
   <View
     accessibilityRole="checkbox"
     accessibilityState={{ checked: goal.done }}
@@ -21,5 +21,10 @@ export const GoalItem: React.FC<Props> = ({ goal, onToggle }) => (
         {goal.due ? <Text style={{ color: '#6B7280' }}>{goal.due}</Text> : null}
       </View>
     </View>
+    {onDelete ? (
+      <Pressable accessibilityRole="button" accessibilityLabel="Excluir meta" onPress={onDelete} hitSlop={8}>
+        <Ionicons name="trash-outline" size={18} color="#EF4444" />
+      </Pressable>
+    ) : null}
   </View>
 );

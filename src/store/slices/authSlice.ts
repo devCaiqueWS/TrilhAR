@@ -1,4 +1,5 @@
 import { StateCreator } from 'zustand';
+import { loginFs } from '../../services/authFs';
 
 export type AuthState = {
   token?: string;
@@ -10,10 +11,10 @@ export type AuthState = {
 export const createAuthSlice: StateCreator<AuthState, [], [], AuthState> = (set) => ({
   token: undefined,
   user: null,
-  login: async (email, _password) => {
-    // mock login
-    set({ token: 'dev-token', user: { id: 'u1', name: email.split('@')[0], email } });
+  login: async (email, password) => {
+    const user = await loginFs(email, password);
+    // Store a simple mock token and the user; persistence layer will save it
+    set({ token: 'dev-token', user });
   },
   logout: () => set({ token: undefined, user: null }),
 });
-
