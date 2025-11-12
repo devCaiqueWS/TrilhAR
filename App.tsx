@@ -11,6 +11,7 @@ import { AppNavigator } from './src/navigation/AppNavigator';
 import { linking } from './src/navigation/Linking';
 import './src/i18n';
 import { installAxiosMocks } from './src/mocks';
+import { flags } from './src/config/flags';
 import { initPersistence } from './src/store/persist';
 
 SplashScreen.preventAutoHideAsync().catch(() => void 0);
@@ -49,7 +50,7 @@ export default function App() {
         console.warn('Fonts not loaded, using system fonts.');
       }
       try {
-        if (__DEV__) installAxiosMocks();
+        if (__DEV__ && flags.useApiMocks) installAxiosMocks();
       } catch (e) {
         console.warn('Mocks install failed, continuing without mocks.');
       }

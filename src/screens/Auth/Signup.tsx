@@ -6,7 +6,6 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { PrimaryButton } from '../../components/PrimaryButton';
-import { signupFs } from '../../services/authFs';
 import { useAppStore } from '../../store';
 
 type Props = NativeStackScreenProps<OnboardingStackParamList, 'Signup'>;
@@ -21,15 +20,13 @@ type FormValues = z.infer<typeof schema>;
 
 export const SignupScreen: React.FC<Props> = ({ navigation }) => {
   const { setValue, formState, handleSubmit } = useForm<FormValues>({ resolver: zodResolver(schema) });
-  const login = useAppStore((s) => s.login);
+  const register = useAppStore((s) => s.register!);
   const [loading, setLoading] = useState(false);
 
   const submit = handleSubmit(async (data) => {
     try {
       setLoading(true);
-      await signupFs(data);
-      // Auto login after signup
-      await login(data.email, data.password);
+      await register(data.name, data.email, data.password);
       navigation.replace('Preferences');
     } catch (e: any) {
       Alert.alert('Erro', e?.message || 'Falha ao cadastrar');
