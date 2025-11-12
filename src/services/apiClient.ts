@@ -4,6 +4,16 @@ import { flags } from '../config/flags';
 import { useAppStore } from '../store';
 
 function resolveBaseURL() {
+  // On Web, prefer current page host (avoids using Android-specific 10.0.2.2)
+  if (Platform.OS === 'web') {
+    try {
+      const host = (globalThis as any)?.location?.hostname || 'localhost';
+      const proto = (globalThis as any)?.location?.protocol || 'http:';
+      return `${proto}//${host}:8080`;
+    } catch {
+      return 'http://localhost:8080';
+    }
+  }
   const scriptURL: string | undefined = (NativeModules as any)?.SourceCode?.scriptURL;
   const devHost = (() => {
     if (!scriptURL) return null;
