@@ -36,23 +36,17 @@ export function useCreateGoal() {
 export function useToggleGoal() {
   const qc = useQueryClient();
   return useMutation({
+    // Backend não possui PUT/PATCH; atualiza apenas no cache local
     mutationFn: async ({ id, done }: { id: string; done: boolean }) => {
-      try {
-        return (await apiClient.patch(`/goals/${id}`, { done })).data as Goal;
-      } catch (e: any) {
-        try {
-          return (await apiClient.put(`/goals/${id}`, { done })).data as Goal;
-        } catch {
-          const current = ((qc.getQueryData(GOALS_KEY) as Goal[] | undefined) || []).map((g) =>
-            g.id === id ? { ...g, done } : g,
-          );
-          qc.setQueryData(GOALS_KEY, current);
-          const updated = current.find((g) => g.id === id);
-          return updated as Goal;
-        }
-      }
+      const current = ((qc.getQueryData(GOALS_KEY) as Goal[] | undefined) || []).map((g) =>
+        g.id === id ? { ...g, done } : g,
+      );
+      qc.setQueryData(GOALS_KEY, current);
+      const updated = current.find((g) => g.id === id) as Goal | undefined;
+      return updated as Goal;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: GOALS_KEY }),
+    // Mantém dados locais sem invalidar a API, já que não há endpoint de update
+    onSuccess: () => void 0,
   });
 }
 
