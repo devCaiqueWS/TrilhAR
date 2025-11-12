@@ -1,9 +1,20 @@
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from 'axios';
-import { Platform } from 'react-native';
+import { Platform, NativeModules } from 'react-native';
 import { flags } from '../config/flags';
 import { useAppStore } from '../store';
 
 function resolveBaseURL() {
+  const scriptURL: string | undefined = (NativeModules as any)?.SourceCode?.scriptURL;
+  const devHost = (() => {
+    if (!scriptURL) return null;
+    try {
+      const m = scriptURL.match(/^https?:\/\/([^/:]+)(?::\d+)?\//);
+      return m?.[1] || null;
+    } catch {
+      return null;
+    }
+  })();
+
   if (flags.apiBaseURL) {
     if (Platform.OS === 'android') {
       // Android emulator can't reach localhost directly
@@ -11,7 +22,11 @@ function resolveBaseURL() {
     }
     return flags.apiBaseURL;
   }
-  return 'http://localhost:8080';
+  // No explicit base: try to use dev host from Metro/Expo packager
+  if (devHost) {
+    return `http://${devHost}:8080`;
+  }
+  return Platform.OS === 'android' ? 'http://10.0.2.2:8080' : 'http://localhost:8080';
 }
 
 const apiClient: AxiosInstance = axios.create({
