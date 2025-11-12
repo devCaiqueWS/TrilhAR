@@ -22,9 +22,14 @@ function resolveBaseURL() {
     }
     return flags.apiBaseURL;
   }
-  // No explicit base: try to use dev host from Metro/Expo packager
+  // No explicit base: try to use dev host from Metro/Expo packager when it's an IP or localhost
   if (devHost) {
-    return `http://${devHost}:8080`;
+    const isIP = /^(?:\d{1,3}\.){3}\d{1,3}$/.test(devHost);
+    const isLocal = devHost === 'localhost' || devHost === '127.0.0.1';
+    if (isIP || isLocal) {
+      return `http://${devHost}:8080`;
+    }
+    // Ignore exp.host / u.expo.dev or other domains used in Tunnel mode
   }
   return Platform.OS === 'android' ? 'http://10.0.2.2:8080' : 'http://localhost:8080';
 }
@@ -33,6 +38,12 @@ const apiClient: AxiosInstance = axios.create({
   baseURL: resolveBaseURL(),
   timeout: 10_000,
 });
+
+if (__DEV__) {
+  // Helpful to diagnose Network Error due to wrong host
+  // eslint-disable-next-line no-console
+  console.log('[api] baseURL:', apiClient.defaults.baseURL);
+}
 
 // Cancel support
 export const createCancelToken = () => new AbortController();
