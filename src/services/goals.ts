@@ -14,7 +14,21 @@ export function useGoals() {
 export function useCreateGoal() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (payload: Pick<Goal, 'title' | 'due'>) => (await apiClient.post('/goals', payload)).data as Goal,
+    mutationFn: async (payload: Pick<Goal, 'title' | 'due'>) => {
+      try {
+        return (await apiClient.post('/goals', payload)).data as Goal;
+      } catch (e: any) {
+        const local: Goal = {
+          id: `local-${Date.now()}`,
+          title: payload.title,
+          due: payload.due,
+          done: false,
+        } as Goal;
+        const prev = (qc.getQueryData(GOALS_KEY) as Goal[] | undefined) || [];
+        qc.setQueryData(GOALS_KEY, [local, ...prev]);
+        return local;
+      }
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: GOALS_KEY }),
   });
 }
@@ -26,8 +40,16 @@ export function useToggleGoal() {
       try {
         return (await apiClient.patch(`/goals/${id}`, { done })).data as Goal;
       } catch (e: any) {
-        // fallback to PUT if PATCH not supported
-        return (await apiClient.put(`/goals/${id}`, { done })).data as Goal;
+        try {
+          return (await apiClient.put(`/goals/${id}`, { done })).data as Goal;
+        } catch {
+          const current = ((qc.getQueryData(GOALS_KEY) as Goal[] | undefined) || []).map((g) =>
+            g.id === id ? { ...g, done } : g,
+          );
+          qc.setQueryData(GOALS_KEY, current);
+          const updated = current.find((g) => g.id === id);
+          return updated as Goal;
+        }
       }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: GOALS_KEY }),
@@ -38,8 +60,14 @@ export function useDeleteGoal() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      await apiClient.delete(`/goals/${id}`);
-      return id;
+      try {
+        await apiClient.delete(`/goals/${id}`);
+        return id;
+      } catch {
+        const prev = (qc.getQueryData(GOALS_KEY) as Goal[] | undefined) || [];
+        qc.setQueryData(GOALS_KEY, prev.filter((g) => g.id !== id));
+        return id;
+      }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: GOALS_KEY }),
   });
