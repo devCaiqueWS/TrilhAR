@@ -22,7 +22,14 @@ export function useCreateGoal() {
 export function useToggleGoal() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, done }: { id: string; done: boolean }) => (await apiClient.patch(`/goals/${id}`, { done })).data as Goal,
+    mutationFn: async ({ id, done }: { id: string; done: boolean }) => {
+      try {
+        return (await apiClient.patch(`/goals/${id}`, { done })).data as Goal;
+      } catch (e: any) {
+        // fallback to PUT if PATCH not supported
+        return (await apiClient.put(`/goals/${id}`, { done })).data as Goal;
+      }
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: GOALS_KEY }),
   });
 }
@@ -37,4 +44,3 @@ export function useDeleteGoal() {
     onSuccess: () => qc.invalidateQueries({ queryKey: GOALS_KEY }),
   });
 }
-

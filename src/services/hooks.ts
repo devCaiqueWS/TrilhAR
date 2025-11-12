@@ -1,5 +1,6 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import apiClient from './apiClient';
+import type { Track } from '../store/types';
 
 export function useCourses() {
   return useQuery({
@@ -23,3 +24,17 @@ export function useTrack(id: string) {
   });
 }
 
+export function useTracks() {
+  return useQuery({
+    queryKey: ['tracks'],
+    queryFn: async () => (await apiClient.get('/tracks')).data.data as Track[],
+  });
+}
+
+export function useCreateTrack() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: Partial<Track> & { title: string; level: Track['level']; skillsTarget: string[]; durationWeeks: number; modules?: { title: string; lessons?: string[] }[] }) => (await apiClient.post('/tracks', payload)).data as Track,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['tracks'] }),
+  });
+}
