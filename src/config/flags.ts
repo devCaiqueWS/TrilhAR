@@ -3,6 +3,6 @@ export const flags = {
   enableCertsInternal: false,
   // Toggle API mocks. When false, app uses real backend via axios.
   useApiMocks: false,
-  // Default API base; Platform-specific override computed in apiClient
-  apiBaseURL: 'http://localhost:8080',
+  // Default API base; set to Android emulator host as solicitado
+  apiBaseURL: 'http://10.0.2.2:8080',
 };
