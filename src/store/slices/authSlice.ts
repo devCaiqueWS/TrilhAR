@@ -2,6 +2,7 @@ import { StateCreator } from 'zustand';
 import { loginFs } from '../../services/authFs';
 import { apiLogin, apiRegister } from '../../services/authApi';
 import { flags } from '../../config/flags';
+import { clearAuthFromAsyncStorage, saveAuthToAsyncStorage } from '../../storage/asyncAuth';
 
 export type AuthState = {
   token?: string;
@@ -18,10 +19,12 @@ export const createAuthSlice: StateCreator<AuthState, [], [], AuthState> = (set)
     if (flags.useApiMocks) {
       const user = await loginFs(email, password);
       set({ token: 'dev-token', user });
+      await saveAuthToAsyncStorage('dev-token', user);
       return;
     }
     const res = await apiLogin(email, password);
     set({ token: res.token, user: res.user });
+    await saveAuthToAsyncStorage(res.token, res.user);
   },
   register: async (name: string, email: string, password: string) => {
     if (flags.useApiMocks) {
@@ -30,10 +33,15 @@ export const createAuthSlice: StateCreator<AuthState, [], [], AuthState> = (set)
       await signupFs({ name, email, password });
       const user = await loginFs(email, password);
       set({ token: 'dev-token', user });
+      await saveAuthToAsyncStorage('dev-token', user);
       return;
     }
     const res = await apiRegister(name, email, password);
     set({ token: res.token, user: res.user });
+    await saveAuthToAsyncStorage(res.token, res.user);
   },
-  logout: () => set({ token: undefined, user: null }),
+  logout: () => {
+    void clearAuthFromAsyncStorage();
+    set({ token: undefined, user: null });
+  },
 });
