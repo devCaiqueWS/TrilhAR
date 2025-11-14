@@ -2,6 +2,11 @@
 
 Aplicativo mobile para planejamento de estudos e trilhas de carreira. Usa React Navigation, Zustand, React Query e Axios. Integra com uma API Spring Boot (JWT) para autenticação, metas, trilhas e catálogo.
 
+## 👥 Integrantes
+- Caíque Walter Silva - RM550693
+- Guilherme Nobre Bernardo - RM98604
+- Matheus José de Lima Costa - RM551157
+
 ## 🔗 API Backend
 
 - Repositório: https://github.com/MatheusCosta616/API-GS-MOBILE
@@ -12,7 +17,7 @@ Aplicativo mobile para planejamento de estudos e trilhas de carreira. Usa React 
 ### Endpoints utilizados
 - Auth: `POST /auth/register`, `POST /auth/login`
 - Goals: `GET /goals`, `POST /goals`, `DELETE /goals/{id}`
-  - Observação: a API não possui rota de update; o toggle de “done” é local (cache) para manter a UX.
+  - _Observação: a API não possui rota de update; o toggle de “done” é local (cache) para manter a UX._
 - Tracks: `GET /tracks`, `GET /tracks/{id}`, `POST /tracks`
 - Catálogo: `GET /courses`, `GET /jobs`
 
@@ -77,24 +82,7 @@ Dicas de rede
 - `src/screens/*`: telas organizadas por domínio.
 - `src/components/*`: componentes reutilizáveis (Header, Buttons, Cards, etc.).
 
-## 🔧 Comandos úteis
-
-- Iniciar app: `npm start`
-- Android: `npm run android`
-- iOS: `npm run ios`
-- Web: `npm run web`
-
-## 🎥 Vídeo da Entrega
-
-- Link do vídeo (a ser adicionado aqui):
-  - [placeholder]
-
-## 🧪 Troubleshooting
-
-- Veja no console a linha `[api] baseURL:` para confirmar o endereço alvo.
-- Se a tela de splash travar, o app oculta o splash no primeiro layout (fallback de tempo incluso).
-
 ---
 
-Sinta-se à vontade para abrir issues e sugestões de melhoria.
+
 
