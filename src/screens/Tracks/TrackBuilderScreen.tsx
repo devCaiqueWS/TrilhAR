@@ -44,8 +44,8 @@ export const TrackBuilderScreen: React.FC = () => {
                       skillsTarget: [area],
                       durationWeeks,
                       modules: [
-                        { title: 'Módulo 1', lessons: [] },
-                        { title: 'Módulo 2', lessons: [] },
+                        { id: 'm1', title: 'Módulo 1', lessons: [] },
+                        { id: 'm2', title: 'Módulo 2', lessons: [] },
                       ],
                     });
                     Alert.alert('Trilha criada', res.title);
@@ -61,3 +61,4 @@ export const TrackBuilderScreen: React.FC = () => {
     </View>
   );
 };
+

@@ -6,7 +6,10 @@ const defaultUsers = require('../mocks/users.json') as RawUser[];
 
 export type RawUser = { id: string; name: string; email: string; password: string };
 
-const USERS_FILE = `${FileSystem.documentDirectory || ''}users.json`;
+// Newer expo-file-system types may not expose documentDirectory on the module type in TS.
+// Use a loose accessor to avoid type errors while keeping runtime behavior.
+const FS: any = FileSystem as any;
+const USERS_FILE = `${(FS.documentDirectory || FS.cacheDirectory || '') as string}users.json`;
 
 // In-memory fallback when FS writes are unavailable (e.g., Web)
 let volatileUsers: RawUser[] = [];
